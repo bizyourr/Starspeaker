@@ -1,1 +1,2330 @@
-# Starspeaker
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FINAL LEVEL: STAR SPEAKER 3D ADVENTURE!</title>
+
+  <!-- Google Fonts: Fredoka & Nunito -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Three.js (r128) with automatic CDN fallback for Full-Tab / offline resilience -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+          onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js';"></script>
+
+  <style>
+    :root {
+      --sky-pale: #EBF6FF;
+      --sky-mid: #BAE0FF;
+      --sky-deep: #3B82F6;
+      --butter-pale: #FFFBE6;
+      --butter-mid: #FFF1A8;
+      --butter-gold: #F59E0B;
+      --navy-ink: #1E3A5F;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Nunito', sans-serif;
+      color: var(--navy-ink);
+      background: linear-gradient(180deg, #BAE0FF 0%, #EBF6FF 55%, #FFFBE6 100%);
+      user-select: none;
+      touch-action: none;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      cursor: grab;
+      pointer-events: auto;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+    #canvas-container canvas {
+      display: block;
+      position: fixed;
+      inset: 0;
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
+    /* Dreamy Glassmorphic Pastel Blue & Butter-Yellow Cards */
+
+    .glass-pill {
+      background: linear-gradient(135deg, rgba(255, 251, 230, 0.92), rgba(235, 246, 255, 0.92));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 6px 18px rgba(30, 58, 95, 0.12);
+    }
+
+    /* Tactile 3D Buttons */
+    .btn-game {
+      transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, filter 0.14s ease;
+      cursor: pointer;
+    }
+    .btn-game:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      filter: brightness(1.03);
+    }
+    .btn-game:active:not(:disabled) {
+      transform: translateY(2px) scale(0.97);
+    }
+    .btn-game:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+    }
+
+    .btn-butter {
+      background: linear-gradient(180deg, #FFF1A8 0%, #F4C430 100%);
+      color: #1E3A5F;
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 5px 0 #C99A12, 0 8px 18px rgba(244, 196, 48, 0.35);
+    }
+    .btn-butter:active:not(:disabled) {
+      box-shadow: 0 2px 0 #C99A12;
+    }
+
+    .btn-sky {
+      background: linear-gradient(180deg, #BAE0FF 0%, #5B9BD5 100%);
+      color: #FFFFFF;
+      text-shadow: 0 1px 1px rgba(30, 58, 95, 0.25);
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 5px 0 #3A74A8, 0 8px 18px rgba(91, 155, 213, 0.35);
+    }
+    .btn-sky:active:not(:disabled) {
+      box-shadow: 0 2px 0 #3A74A8;
+    }
+
+    .btn-coral {
+      background: linear-gradient(180deg, #FFB8BE 0%, #FF9AA2 100%);
+      color: #1E3A5F;
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 5px 0 #D66B74, 0 8px 18px rgba(255, 154, 162, 0.38);
+    }
+
+    .btn-mint {
+      background: linear-gradient(180deg, #A4F0A4 0%, #77DD77 100%);
+      color: #1E3A5F;
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 5px 0 #48B048, 0 8px 18px rgba(119, 221, 119, 0.35);
+    }
+
+    /* Virtual Joystick Base & Knob */
+    #joystick-zone {
+      width: 126px;
+      height: 126px;
+      border-radius: 9999px;
+      background: radial-gradient(circle, rgba(255, 251, 230, 0.72) 0%, rgba(186, 224, 255, 0.85) 100%);
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 10px 26px rgba(30, 58, 95, 0.2), inset 0 2px 8px rgba(91, 155, 213, 0.35);
+      position: relative;
+      touch-action: none;
+    }
+    #joystick-knob {
+      width: 52px;
+      height: 52px;
+      border-radius: 9999px;
+      background: linear-gradient(180deg, #FFF1A8 0%, #F4C430 100%);
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 5px 12px rgba(30, 58, 95, 0.28);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Custom Scrollbar inside Modal */
+    .custom-scroll {
+      touch-action: pan-y;
+      user-select: text;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 7px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(186, 224, 255, 0.35);
+      border-radius: 999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #5B9BD5;
+      border-radius: 999px;
+      border: 1.5px solid #EBF6FF;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 196, 48, 0.7); }
+      50% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(244, 196, 48, 0); }
+    }
+    .door-prompt-pulse {
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    @keyframes recPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 154, 162, 0.75); }
+      50% { box-shadow: 0 0 0 12px rgba(255, 154, 162, 0); }
+    }
+    .recording-active {
+      animation: recPulse 1.2s infinite;
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+    .float-slow {
+      animation: floatSlow 2.8s ease-in-out infinite;
+    }
+
+    /* Print Styles for Certificate */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printable-certificate, #printable-certificate * {
+        visibility: visible !important;
+      }
+      #printable-certificate {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 24px !important;
+        box-shadow: none !important;
+        border: 8px double #F4C430 !important;
+        background: #FFFBE6 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D WebGL Canvas -->
+  <div id="canvas-container" aria-label="3D Sky Castle Pathway World"></div>
+
+  <!-- TOP HUD BAR -->
+  <header id="top-hud" class="fixed top-0 left-0 right-0 z-20 p-2.5 sm:p-3.5 pointer-events-none flex flex-wrap items-center justify-between gap-2">
+    <!-- Title & Star Counter -->
+    <div class="glass-pill rounded-2xl px-3.5 py-2 flex items-center gap-2.5 pointer-events-auto">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFF1A8] to-[#F4C430] border-2 border-white flex items-center justify-center text-xl shadow-sm">
+        ⭐
+      </div>
+      <div>
+        <div class="font-display font-bold text-xs sm:text-base leading-tight text-[#1E3A5F]">
+          FINAL LEVEL: STAR SPEAKER 3D ADVENTURE!
+        </div>
+        <div class="text-xs font-bold text-[#1E3A5F]/80 flex items-center gap-1.5">
+          <span>Doors Unlocked:</span>
+          <span id="hud-stars" class="inline-flex items-center gap-0.5 text-sm">
+            <span class="opacity-35">⭐</span><span class="opacity-35">⭐</span><span class="opacity-35">⭐</span><span class="opacity-35">⭐</span>
+          </span>
+          <span id="hud-star-count" class="bg-[#FFF1A8] px-2 py-0.2 rounded-md border border-[#F4C430] text-[#1E3A5F]">0/4</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mini Door Progress Tracker -->
+    <div class="glass-pill rounded-2xl px-2.5 py-1.5 flex items-center gap-1.5 pointer-events-auto" aria-label="Door Progress Tracker">
+      <div id="prog-door-1" class="px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-[#BAE0FF] text-[#1E3A5F] border border-white flex items-center gap-1">
+        <span>🚪1</span><span id="prog-icon-1">🔒</span>
+      </div>
+      <div id="prog-door-2" class="px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-white/70 text-[#1E3A5F]/75 border border-white flex items-center gap-1">
+        <span>🚪2</span><span id="prog-icon-2">🔒</span>
+      </div>
+      <div id="prog-door-3" class="px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-white/70 text-[#1E3A5F]/75 border border-white flex items-center gap-1">
+        <span>🚪3</span><span id="prog-icon-3">🔒</span>
+      </div>
+      <div id="prog-door-4" class="px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-white/70 text-[#1E3A5F]/75 border border-white flex items-center gap-1">
+        <span>🚪4</span><span id="prog-icon-4">🔒</span>
+      </div>
+    </div>
+
+    <!-- Helper Buttons: Teleport to Next Door + Open Full Tab (Mic) -->
+    <div class="flex items-center gap-2 pointer-events-auto">
+      <button onclick="teleportToNextDoor()" title="Walk Helper: Jump to the next locked door" class="btn-game glass-pill px-3 py-2 rounded-2xl text-xs sm:text-sm font-display font-bold text-[#1E3A5F] flex items-center gap-1.5">
+        <span>✨</span><span class="hidden sm:inline">Teleport to Next Door</span><span class="sm:hidden">Next Door</span>
+      </button>
+      <button onclick="openInFullTab()" class="btn-game btn-butter px-3 py-2 rounded-2xl text-xs sm:text-sm font-display font-bold flex items-center gap-1.5">
+        <span>🚀 Full Tab (Mic)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- PROXIMITY DOOR PROMPT BANNER (Appears when standing near a Door or Victory Sanctuary) -->
+  <div id="door-proximity-banner" class="hidden fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+    <button id="btn-door-prompt" onclick="handleInteractAction()" class="door-prompt-pulse btn-game btn-butter px-5 py-3 rounded-3xl font-display font-bold text-sm sm:text-lg flex items-center gap-2.5 shadow-xl">
+      <span id="door-prompt-icon" class="text-xl">🚪</span>
+      <span id="door-prompt-text">Door 1 Reached! [Start Speaking Challenge]</span>
+      <span class="text-xs bg-white/90 px-2 py-0.5 rounded-full border border-[#F4C430] hidden sm:inline">Press E / Space</span>
+    </button>
+  </div>
+
+  <!-- ON-SCREEN WALKING CONTROLS (Bottom-Left Virtual Joystick + Bottom-Right Jump/Interact) -->
+  <div id="walk-controls-ui" class="hidden fixed bottom-4 left-4 right-4 z-20 pointer-events-none flex items-end justify-between">
+    <!-- Left: Virtual Joystick + WASD Hint -->
+    <div class="flex flex-col items-center gap-1.5 pointer-events-auto">
+      <div id="joystick-zone" aria-label="Virtual Walking Joystick">
+        <div id="joystick-knob">⭐</div>
+      </div>
+      <div class="glass-pill px-2.5 py-0.5 rounded-full text-[11px] font-bold text-[#1E3A5F]/85">
+        Drag Stick or WASD / Arrows
+      </div>
+    </div>
+
+    <!-- Center Hint on Desktop -->
+    <div class="hidden md:flex glass-pill px-4 py-1.5 rounded-full text-xs font-bold text-[#1E3A5F]/85 items-center gap-2">
+      <span>🚶 Walk forward along the Sky Castle Pathway to reach each locked Door! (Drag sky to look around)</span>
+    </div>
+
+    <!-- Right: Action Buttons (Open Door / Interact + Jump) -->
+    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2.5 pointer-events-auto">
+      <button id="btn-hud-interact" onclick="handleInteractAction()" class="hidden btn-game btn-butter px-4 py-3.5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center gap-1.5 shadow-lg">
+        <span>🚪 Open Door</span>
+      </button>
+      <button onclick="triggerPlayerJump()" class="btn-game btn-sky w-16 h-16 sm:w-20 sm:h-20 rounded-full font-display font-bold text-xs sm:text-sm flex flex-col items-center justify-center shadow-lg">
+        <span class="text-xl leading-none">🦘</span>
+        <span>JUMP</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- WELCOME MODAL -->
+  <div id="welcome-overlay" class="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-6 bg-[#1E3A5F]/25 backdrop-blur-[4px]">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto custom-scroll p-5 sm:p-7 relative">
+      <div class="flex justify-center mb-2">
+        <span class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#FFF1A8] border-2 border-white text-xs sm:text-sm font-display font-bold text-[#1E3A5F] shadow-sm">
+          🏰 3D SKY CASTLE WALKING ADVENTURE 🏰
+        </span>
+      </div>
+
+      <h1 class="font-display font-bold text-2xl sm:text-3xl text-center text-[#1E3A5F] mb-3">
+        FINAL LEVEL: STAR SPEAKER 3D ADVENTURE!
+      </h1>
+
+      <!-- Exact Prompt Message -->
+      <div class="bg-white/85 rounded-2xl p-4 sm:p-5 border-2 border-[#BAE0FF] shadow-inner space-y-2.5 text-sm sm:text-base leading-relaxed text-[#1E3A5F]">
+        <p class="font-extrabold text-base sm:text-lg text-[#5B9BD5]">
+          Congratulations, Player! You have reached the final level!
+        </p>
+        <p class="font-semibold">
+          Now it is time to show what you have learned. Complete the speaking challenges below to demonstrate your English-speaking skills.
+        </p>
+        <p class="font-display font-bold text-base sm:text-lg text-[#1E3A5F]">
+          Good luck, Player! Show us what you can do! 🌟
+        </p>
+      </div>
+
+      <!-- Visual Guide: How to Walk & Unlock the 4 Doors -->
+      <div class="mt-3.5 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div class="rounded-2xl p-3 bg-[#EBF6FF] border-2 border-[#BAE0FF] text-center">
+          <div class="text-2xl mb-1">🕹️ / ⌨️</div>
+          <div class="font-display font-bold text-xs sm:text-sm text-[#1E3A5F]">1. Walk in 3D</div>
+          <div class="text-xs font-semibold text-[#1E3A5F]/80">Use <strong>WASD / Arrows</strong> or the <strong>On-Screen Joystick</strong> to walk!</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-[#FFFBE6] border-2 border-[#FFF1A8] text-center">
+          <div class="text-2xl mb-1">🚪🎤</div>
+          <div class="font-display font-bold text-xs sm:text-sm text-[#1E3A5F]">2. Encounter 4 Doors</div>
+          <div class="text-xs font-semibold text-[#1E3A5F]/80">Walk up to each <strong>Archway Door</strong> and pass its speaking assessment!</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-[#EBF6FF] border-2 border-[#77DD77]/60 text-center">
+          <div class="text-2xl mb-1">🏆⭐</div>
+          <div class="font-display font-bold text-xs sm:text-sm text-[#1E3A5F]">3. Unlock Sanctuary</div>
+          <div class="text-xs font-semibold text-[#1E3A5F]/80">Swing open all 4 doors to reach the <strong>Victory Sanctuary</strong>!</div>
+        </div>
+      </div>
+
+      <!-- Start & Full-Tab Mic Buttons -->
+      <div class="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="startGame()" class="btn-game btn-sky w-full sm:w-auto px-7 py-3.5 rounded-2xl font-display font-bold text-base sm:text-lg flex items-center justify-center gap-2">
+          <span>🎮 START WALKING</span>
+        </button>
+        <button onclick="openInFullTab()" class="btn-game btn-butter w-full sm:w-auto px-5 py-3.5 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2">
+          <span>🚀 OPEN IN FULL TAB (ENABLE MIC)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOOR SPEAKING ASSESSMENT MODAL (Opens when encountering a Door) -->
+  <div id="door-modal-overlay" class="hidden fixed inset-0 z-40 flex items-center justify-center p-2.5 sm:p-5 bg-[#1E3A5F]/35 backdrop-blur-[5px]">
+    <div class="glass-panel rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-4 sm:px-6 py-3.5 bg-gradient-to-r from-[#BAE0FF] to-[#FFF1A8] border-b-2 border-white flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-3">
+          <span id="modal-door-badge" class="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm border-2 border-[#F4C430]">🚪</span>
+          <div>
+            <div id="modal-door-sub" class="text-xs font-extrabold uppercase tracking-wider text-[#1E3A5F]/75">DOOR 1 ASSESSMENT • CHALLENGE 1 OF 4</div>
+            <h2 id="modal-door-title" class="font-display font-bold text-lg sm:text-xl text-[#1E3A5F] leading-tight">Introduce Yourself</h2>
+          </div>
+        </div>
+        <button onclick="closeDoorModal()" title="Step back to 3D Pathway" class="btn-game bg-white/90 hover:bg-white text-[#1E3A5F] border-2 border-[#BAE0FF] px-3 py-1.5 rounded-xl font-display font-bold text-xs sm:text-sm">
+          ✕ Step Back
+        </button>
+      </div>
+
+      <!-- Scrollable Assessment Body -->
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll space-y-4 flex-1">
+        <!-- Instruction Box -->
+        <div class="bg-[#FFFBE6] border-2 border-[#F4C430] rounded-2xl px-4 py-3 text-xs sm:text-sm font-extrabold text-[#1E3A5F] flex items-start gap-2.5">
+          <span class="text-lg leading-none">💡</span>
+          <span id="modal-door-instruction">Introduce yourself using at least four simple sentences.</span>
+        </div>
+
+        <!-- Dynamic Challenge Activity Content -->
+        <div id="modal-dynamic-content" class="space-y-3"></div>
+
+        <!-- REAL VOICE RECORDING & PLAYBACK STUDIO -->
+        <div class="bg-white/90 rounded-2xl p-3.5 sm:p-4 border-2 border-[#BAE0FF] space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="font-display font-bold text-sm sm:text-base text-[#1E3A5F] flex items-center gap-1.5">
+              <span>🎙️ Star Speaker Voice Recorder</span>
+            </div>
+            <span id="rec-timer" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-[#EBF6FF] text-[#1E3A5F] border border-[#BAE0FF]">00:00</span>
+          </div>
+
+          <!-- Live Web Audio Equalizer Bars -->
+          <div class="h-10 rounded-xl bg-[#EBF6FF] border border-[#BAE0FF] px-3 flex items-center justify-center gap-1.5 overflow-hidden">
+            <div class="eq-bar w-2 bg-[#5B9BD5] rounded-full transition-all duration-75" style="height: 24%"></div>
+            <div class="eq-bar w-2 bg-[#F4C430] rounded-full transition-all duration-75" style="height: 36%"></div>
+            <div class="eq-bar w-2 bg-[#5B9BD5] rounded-full transition-all duration-75" style="height: 28%"></div>
+            <div class="eq-bar w-2 bg-[#F4C430] rounded-full transition-all duration-75" style="height: 46%"></div>
+            <div class="eq-bar w-2 bg-[#5B9BD5] rounded-full transition-all duration-75" style="height: 30%"></div>
+            <div class="eq-bar w-2 bg-[#F4C430] rounded-full transition-all duration-75" style="height: 52%"></div>
+            <div class="eq-bar w-2 bg-[#5B9BD5] rounded-full transition-all duration-75" style="height: 26%"></div>
+            <div class="eq-bar w-2 bg-[#F4C430] rounded-full transition-all duration-75" style="height: 40%"></div>
+            <div class="eq-bar w-2 bg-[#5B9BD5] rounded-full transition-all duration-75" style="height: 32%"></div>
+            <div class="eq-bar w-2 bg-[#F4C430] rounded-full transition-all duration-75" style="height: 24%"></div>
+            <span id="eq-status-text" class="ml-2 text-xs font-bold text-[#1E3A5F]/80">Press Record and speak clearly!</span>
+          </div>
+
+          <!-- Mic Permission Recovery Banner -->
+          <div id="mic-error-box" class="hidden rounded-xl bg-[#FFFBE6] border-2 border-[#FF9AA2] p-3 text-xs text-[#1E3A5F] space-y-2">
+            <div class="font-extrabold text-[#1E3A5F]" id="mic-error-msg">Microphone access was blocked in this preview frame.</div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="openInFullTab()" class="btn-game btn-butter px-3 py-1.5 rounded-xl font-display font-bold text-xs">
+                🚀 Open Full Tab (Enable Mic)
+              </button>
+              <button onclick="practiceWithoutMic()" class="btn-game btn-mint px-3 py-1.5 rounded-xl font-display font-bold text-xs">
+                ✅ Practice Without Mic (Self-Check)
+              </button>
+            </div>
+          </div>
+
+          <!-- Recording Buttons -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-record" onclick="startRecording()" class="btn-game btn-coral flex-1 min-w-[155px] py-2.5 px-3.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>🔴 RECORD MY VOICE</span>
+            </button>
+            <button id="btn-stop" onclick="stopRecording()" class="hidden btn-game bg-[#1E3A5F] text-white border-2 border-white flex-1 min-w-[155px] py-2.5 px-3.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>⏹️ STOP RECORDING</span>
+            </button>
+            <button id="btn-play" onclick="playRecording()" class="hidden btn-game btn-sky py-2.5 px-3.5 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <span>▶️ PLAY MY RECORDING</span>
+            </button>
+            <button id="btn-again" onclick="resetRecording()" class="hidden btn-game bg-white text-[#1E3A5F] border-2 border-[#BAE0FF] py-2.5 px-3 rounded-xl font-display font-bold text-xs sm:text-sm flex items-center justify-center gap-1">
+              <span>🔄 Record Again</span>
+            </button>
+          </div>
+
+          <!-- HTML5 Audio Element -->
+          <div id="audio-player-wrap" class="hidden pt-1">
+            <audio id="audio-playback" controls class="w-full h-9 rounded-lg"></audio>
+          </div>
+
+          <!-- Always-accessible Practice Without Mic Fallback -->
+          <div class="flex items-center justify-between pt-1 border-t border-[#EBF6FF]">
+            <span class="text-[11px] font-bold text-[#1E3A5F]/65">Practicing aloud with your teacher or partner?</span>
+            <button onclick="practiceWithoutMic()" class="text-xs font-display font-bold text-[#5B9BD5] hover:underline">
+              ✅ Practice Without Mic (Self-Check)
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-POINT SPEAKING SELF-CHECKLIST & UNLOCK DOOR BUTTON -->
+        <div id="checklist-card" class="hidden bg-gradient-to-br from-[#FFFBE6] to-[#EBF6FF] rounded-2xl p-4 border-2 border-[#F4C430] space-y-2.5 shadow-sm">
+          <div class="font-display font-bold text-sm sm:text-base text-[#1E3A5F] flex flex-wrap items-center justify-between gap-1">
+            <span>🌟 Star Speaker Self-Checklist</span>
+            <span class="text-xs bg-[#FFF1A8] px-2.5 py-0.5 rounded-full border border-[#F4C430]">Tick all 3 to swing open the Door!</span>
+          </div>
+
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/90 border border-[#BAE0FF] cursor-pointer hover:bg-white">
+            <input type="checkbox" id="chk-1" onchange="evaluateChecklist()" class="w-5 h-5 accent-[#5B9BD5] rounded cursor-pointer" />
+            <span class="text-xs sm:text-sm font-bold text-[#1E3A5F]">1. Did I speak clearly?</span>
+          </label>
+
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/90 border border-[#BAE0FF] cursor-pointer hover:bg-white">
+            <input type="checkbox" id="chk-2" onchange="evaluateChecklist()" class="w-5 h-5 accent-[#5B9BD5] rounded cursor-pointer" />
+            <span class="text-xs sm:text-sm font-bold text-[#1E3A5F]">2. Did I use complete sentences?</span>
+          </label>
+
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/90 border border-[#BAE0FF] cursor-pointer hover:bg-white">
+            <input type="checkbox" id="chk-3" onchange="evaluateChecklist()" class="w-5 h-5 accent-[#5B9BD5] rounded cursor-pointer" />
+            <span class="text-xs sm:text-sm font-bold text-[#1E3A5F]">3. Did I speak confidently?</span>
+          </label>
+
+          <button id="btn-unlock-door" onclick="unlockCurrentDoor()" disabled class="btn-game btn-mint w-full py-3 px-4 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2">
+            <span>🔓 UNLOCK DOOR & CONTINUE!</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION (Non-blocking) -->
+  <div id="toast-box" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 transform -translate-y-2">
+    <div class="glass-pill px-4 py-2.5 rounded-2xl border-2 border-[#F4C430] bg-[#FFFBE6] text-[#1E3A5F] font-display font-bold text-xs sm:text-sm shadow-lg flex items-center gap-2">
+      <span id="toast-icon">⭐</span>
+      <span id="toast-text">Great job!</span>
+    </div>
+  </div>
+
+  <!-- FINAL CELEBRATION & PRINTABLE CHAMPION CERTIFICATE -->
+  <div id="certificate-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#1E3A5F]/35 backdrop-blur-[5px] overflow-y-auto">
+    <div id="printable-certificate" class="glass-panel rounded-3xl max-w-2xl w-full p-5 sm:p-8 border-4 border-[#F4C430] relative text-center space-y-4 my-auto">
+      <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#FFF1A8] border-2 border-[#F4C430] font-display font-bold text-xs sm:text-sm text-[#1E3A5F]">
+        🏆 VICTORY SANCTUARY REACHED • ALL 4 DOORS UNLOCKED 🏆
+      </div>
+
+      <h2 class="font-display font-bold text-2xl sm:text-4xl text-[#1E3A5F] tracking-tight">
+        Star Speaker 3D Adventure Certificate
+      </h2>
+
+      <p class="text-xs sm:text-sm font-bold text-[#1E3A5F]/80">
+        This proud certificate of speaking excellence is awarded to
+      </p>
+
+      <!-- Editable Pupil Name -->
+      <div class="max-w-md mx-auto">
+        <input
+          type="text"
+          id="pupil-name-input"
+          placeholder="Enter your name here..."
+          value="Super Star Pupil"
+          class="w-full text-center font-display font-bold text-xl sm:text-2xl text-[#1E3A5F] bg-white/95 border-2 border-[#5B9BD5] focus:border-[#F4C430] focus:outline-none rounded-2xl px-4 py-2 shadow-inner"
+        />
+      </div>
+
+      <!-- 4 Earned Gold Stars -->
+      <div class="flex items-center justify-center gap-3 text-3xl sm:text-4xl py-1">
+        <span class="float-slow" style="animation-delay: 0s;">⭐</span>
+        <span class="float-slow" style="animation-delay: 0.2s;">⭐</span>
+        <span class="float-slow" style="animation-delay: 0.4s;">⭐</span>
+        <span class="float-slow" style="animation-delay: 0.6s;">⭐</span>
+      </div>
+
+      <p class="text-xs sm:text-sm font-bold text-[#1E3A5F] max-w-lg mx-auto">
+        For walking the 3D Sky Castle Pathway, unlocking all four Speaking Doors, and demonstrating clear, complete, and confident English speaking!
+      </p>
+
+      <!-- Summary of Completed Doors -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left bg-white/85 p-3.5 rounded-2xl border-2 border-[#BAE0FF]">
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1E3A5F]">
+          <span>🚪✅</span>
+          <span><strong>Door 1:</strong> Introduced Myself (4+ sentences)</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1E3A5F]">
+          <span>🚪✅</span>
+          <span><strong>Door 2:</strong> Asked & Answered 3 Questions</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1E3A5F]">
+          <span>🚪✅</span>
+          <span id="cert-ch3-summary"><strong>Door 3:</strong> Described a Picture</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1E3A5F]">
+          <span>🚪✅</span>
+          <span><strong>Door 4:</strong> Narrated a 4-Part Story</span>
+        </div>
+      </div>
+
+      <!-- Print / Save & Play Again Buttons -->
+      <div class="no-print pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="window.print()" class="btn-game btn-butter w-full sm:w-auto px-6 py-3 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2">
+          <span>🖨️ Print / Save Certificate</span>
+        </button>
+        <button onclick="resetFullGame()" class="btn-game btn-sky w-full sm:w-auto px-6 py-3 rounded-2xl font-display font-bold text-sm sm:text-base flex items-center justify-center gap-2">
+          <span>🔄 Play Again</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. GAME STATE & CURRICULUM CONTENT
+     *************************************************************************/
+    const gameState = {
+      started: false,
+      modalOpen: false,
+      certificateShown: false,
+      activeDoorId: 1,
+      nearbyDoorId: null, // 1..4 or 'sanctuary'
+      unlockedDoors: { 1: false, 2: false, 3: false, 4: false },
+      // Challenge 1
+      ch1Text: "My name is Amina. I am ten years old. I live in Kedah. My favourite hobby is drawing. I love learning English.",
+      // Challenge 2
+      ch2Mode: "bot", // 'bot' | 'partner'
+      ch2BotStep: 0,
+      ch2PartnerIdx: 0,
+      // Challenge 3
+      ch3Choice: "astronaut",
+      ch3Notes: "This is a brave space astronaut. He is wearing a white spacesuit and a shiny golden helmet. He loves exploring the stars!",
+      // Challenge 4
+      ch4ActivePanel: 0,
+      ch4Notes: "First, two friends play happily in the sunny park. Next, dark clouds appear and a tiny lost kitten hides in the rain. Then, they share their bright yellow umbrella with the wet kitten. Finally, they take the kitten to a cosy home under a rainbow!",
+      // Voice recording state
+      isRecording: false,
+      audioUrl: null,
+      voiceVolume: 0
+    };
+
+    const CH2_BOT_TURNS = [
+      {
+        botSays: "Beep-boop! Hello, Star Explorer! What is your favourite food, and why do you like it?",
+        pupilHint: "Answer the Bot, then ask a question back! Example: 'My favourite food is chicken rice because it is tasty. What is your favourite food?'"
+      },
+      {
+        botSays: "Yummy! Now Question 2: What do you like to do in your free time after school?",
+        pupilHint: "Answer Question 2, then ask the Bot back! Example: 'In my free time, I like to read storybooks and ride my bicycle. What do you do after school?'"
+      },
+      {
+        botSays: "Awesome! Final Question 3: What is your favourite animal, and what does it look like?",
+        pupilHint: "Answer Question 3 and ask one last question! Example: 'My favourite animal is a rabbit. It has long ears and soft white fur. What is your favourite animal?'"
+      }
+    ];
+
+    const CH2_PARTNER_CARDS = [
+      {
+        qTitle: "Question 1: Food & Drinks",
+        askPrompt: "Partner A asks: 'What is your favourite food and drink?'",
+        answerPrompt: "Partner B answers: 'My favourite food is ___ and my favourite drink is ___.'"
+      },
+      {
+        qTitle: "Question 2: School & Hobbies",
+        askPrompt: "Partner B asks: 'What is your favourite subject at school and why?'",
+        answerPrompt: "Partner A answers: 'My favourite subject is ___ because it is ___.'"
+      },
+      {
+        qTitle: "Question 3: Weekend Adventures",
+        askPrompt: "Partner A asks: 'Where do you like to go on weekends?'",
+        answerPrompt: "Partner B answers: 'On weekends, I like to go to ___ with my ___.'"
+      }
+    ];
+
+    const CH3_PICTURES = {
+      astronaut: {
+        id: "astronaut",
+        name: "Space Astronaut",
+        emoji: "🧑‍🚀",
+        summaryLabel: "Space Astronaut",
+        defaultNote: "This is a brave space astronaut. He is wearing a white spacesuit and a shiny golden helmet. He loves exploring the stars!",
+        chips: ["brave", "white spacesuit", "shiny helmet", "floating in space", "friendly", "curious"],
+        svg: `<svg viewBox="0 0 120 95" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#1E3A5F] to-[#5B9BD5]">
+                <circle cx="24" cy="20" r="2" fill="#FFF1A8"/><circle cx="96" cy="24" r="2.5" fill="#FFF1A8"/><circle cx="88" cy="72" r="2" fill="#FFFFFF"/>
+                <rect x="42" y="52" width="36" height="32" rx="12" fill="#FFFFFF"/>
+                <circle cx="60" cy="36" r="21" fill="#FFFFFF" stroke="#BAE0FF" stroke-width="2"/>
+                <rect x="46" y="27" width="28" height="17" rx="8" fill="#F4C430"/>
+                <rect x="49" y="60" width="22" height="12" rx="4" fill="#BAE0FF"/>
+              </svg>`
+      },
+      chef: {
+        id: "chef",
+        name: "Friendly Chef",
+        emoji: "👨‍🍳",
+        summaryLabel: "Friendly Chef",
+        defaultNote: "This is a friendly chef. He is wearing a tall white chef hat and a yellow scarf. He is baking a delicious cake!",
+        chips: ["friendly", "tall white hat", "smiling", "wearing an apron", "baking a cake", "helpful"],
+        svg: `<svg viewBox="0 0 120 95" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#FFFBE6] to-[#FFF1A8]">
+                <path d="M40 58 Q60 48 80 58 L84 88 L36 88 Z" fill="#FFFFFF" stroke="#BAE0FF" stroke-width="2"/>
+                <circle cx="60" cy="43" r="14" fill="#FDE68A"/>
+                <circle cx="55" cy="41" r="1.8" fill="#1E3A5F"/><circle cx="65" cy="41" r="1.8" fill="#1E3A5F"/>
+                <path d="M56 47 Q60 51 64 47" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"/>
+                <rect x="46" y="22" width="28" height="11" rx="3" fill="#FFFFFF" stroke="#BAE0FF" stroke-width="1.5"/>
+                <circle cx="49" cy="18" r="9" fill="#FFFFFF"/><circle cx="60" cy="15" r="10" fill="#FFFFFF"/><circle cx="71" cy="18" r="9" fill="#FFFFFF"/>
+              </svg>`
+      },
+      puppy: {
+        id: "puppy",
+        name: "Playful Puppy",
+        emoji: "🐶",
+        summaryLabel: "Playful Puppy",
+        defaultNote: "This is a cute, playful puppy. It has soft golden fur, floppy brown ears, and a blue collar!",
+        chips: ["cute", "playful", "soft golden fur", "floppy ears", "blue collar", "wagging tail"],
+        svg: `<svg viewBox="0 0 120 95" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#EBF6FF] to-[#BAE0FF]">
+                <ellipse cx="38" cy="48" rx="9" ry="18" transform="rotate(18 38 48)" fill="#B45309"/>
+                <ellipse cx="82" cy="48" rx="9" ry="18" transform="rotate(-18 82 48)" fill="#B45309"/>
+                <circle cx="60" cy="48" r="22" fill="#FDE68A" stroke="#F4C430" stroke-width="2"/>
+                <circle cx="52" cy="44" r="2.5" fill="#1E3A5F"/><circle cx="68" cy="44" r="2.5" fill="#1E3A5F"/>
+                <ellipse cx="60" cy="52" rx="4.5" ry="3" fill="#1E3A5F"/>
+                <path d="M54 58 Q60 63 66 58" fill="none" stroke="#1E3A5F" stroke-width="2" stroke-linecap="round"/>
+                <rect x="44" y="70" width="32" height="8" rx="4" fill="#5B9BD5"/>
+              </svg>`
+      },
+      treehouse: {
+        id: "treehouse",
+        name: "Magical Treehouse",
+        emoji: "🏡",
+        summaryLabel: "Magical Treehouse",
+        defaultNote: "This is a magical treehouse built in a tall green tree. It has a cosy yellow cabin, a blue roof, and a wooden ladder!",
+        chips: ["magical", "tall green tree", "cosy yellow cabin", "blue roof", "wooden ladder", "colourful"],
+        svg: `<svg viewBox="0 0 120 95" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#BAE0FF] to-[#FFFBE6]">
+                <rect x="52" y="46" width="16" height="44" fill="#92400E"/>
+                <circle cx="42" cy="36" r="20" fill="#77DD77"/><circle cx="78" cy="36" r="20" fill="#77DD77"/><circle cx="60" cy="24" r="22" fill="#77DD77"/>
+                <rect x="45" y="34" width="30" height="22" rx="3" fill="#FFF1A8" stroke="#1E3A5F" stroke-width="1.5"/>
+                <polygon points="41,34 60,20 79,34" fill="#5B9BD5" stroke="#1E3A5F" stroke-width="1.5"/>
+                <line x1="65" y1="56" x2="65" y2="88" stroke="#F4C430" stroke-width="2.5"/>
+                <line x1="72" y1="56" x2="72" y2="88" stroke="#F4C430" stroke-width="2.5"/>
+              </svg>`
+      }
+    };
+
+    const CH4_STORY_PANELS = [
+      {
+        step: "1. First,",
+        title: "Sunny Park",
+        caption: "Two friends play happily in the bright sunny park.",
+        svg: `<svg viewBox="0 0 150 96" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#BAE0FF] to-[#EBF6FF]">
+                <circle cx="124" cy="22" r="13" fill="#F4C430"/>
+                <rect x="0" y="68" width="150" height="28" fill="#77DD77"/>
+                <circle cx="52" cy="48" r="9" fill="#FDE68A" stroke="#1E3A5F" stroke-width="1.5"/>
+                <rect x="44" y="57" width="16" height="18" rx="5" fill="#5B9BD5"/>
+                <circle cx="88" cy="50" r="9" fill="#FDE68A" stroke="#1E3A5F" stroke-width="1.5"/>
+                <rect x="80" y="59" width="16" height="16" rx="5" fill="#FF9AA2"/>
+              </svg>`
+      },
+      {
+        step: "2. Next,",
+        title: "Sudden Rain & Lost Kitten",
+        caption: "Dark clouds bring rain, and a tiny lost kitten shivers under a bush.",
+        svg: `<svg viewBox="0 0 150 96" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#94A3B8] to-[#BAE0FF]">
+                <ellipse cx="52" cy="20" rx="26" ry="11" fill="#64748B"/><ellipse cx="96" cy="22" rx="28" ry="12" fill="#475569"/>
+                <line x1="45" y1="35" x2="40" y2="48" stroke="#EBF6FF" stroke-width="2"/><line x1="80" y1="36" x2="75" y2="49" stroke="#EBF6FF" stroke-width="2"/>
+                <ellipse cx="75" cy="76" rx="34" ry="16" fill="#77DD77"/>
+                <circle cx="75" cy="76" r="10" fill="#FFF1A8" stroke="#1E3A5F" stroke-width="1.5"/>
+                <polygon points="67,68 70,59 74,67" fill="#FFF1A8"/><polygon points="83,68 80,59 76,67" fill="#FFF1A8"/>
+              </svg>`
+      },
+      {
+        step: "3. Then,",
+        title: "Sharing an Umbrella",
+        caption: "The kind friends shelter the wet kitten under their bright yellow umbrella.",
+        svg: `<svg viewBox="0 0 150 96" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#EBF6FF] to-[#FFFBE6]">
+                <path d="M34 45 Q75 10 116 45 Z" fill="#F4C430" stroke="#1E3A5F" stroke-width="1.8"/>
+                <path d="M75 45 L75 76 Q75 82 69 82" fill="none" stroke="#1E3A5F" stroke-width="2.5"/>
+                <circle cx="54" cy="60" r="8" fill="#FDE68A" stroke="#1E3A5F" stroke-width="1.5"/>
+                <rect x="46" y="68" width="16" height="16" rx="5" fill="#5B9BD5"/>
+                <circle cx="96" cy="74" r="9" fill="#FFF1A8" stroke="#1E3A5F" stroke-width="1.5"/>
+                <polygon points="89,67 91,59 95,66" fill="#FFF1A8"/><polygon points="103,67 101,59 97,66" fill="#FFF1A8"/>
+              </svg>`
+      },
+      {
+        step: "4. Finally,",
+        title: "Cosy Home & Rainbow",
+        caption: "A colourful rainbow shines as the dry, happy kitten purrs in its cosy home!",
+        svg: `<svg viewBox="0 0 150 96" class="w-full h-20 rounded-xl bg-gradient-to-b from-[#BAE0FF] to-[#FFF1A8]">
+                <path d="M22 65 A52 46 0 0 1 128 65" fill="none" stroke="#FF9AA2" stroke-width="4"/>
+                <path d="M28 65 A46 40 0 0 1 122 65" fill="none" stroke="#F4C430" stroke-width="4"/>
+                <path d="M34 65 A40 34 0 0 1 116 65" fill="none" stroke="#77DD77" stroke-width="4"/>
+                <rect x="52" y="54" width="46" height="28" rx="10" fill="#FFFBE6" stroke="#1E3A5F" stroke-width="1.5"/>
+                <circle cx="75" cy="54" r="11" fill="#FFF1A8" stroke="#1E3A5F" stroke-width="1.5"/>
+                <text x="104" y="46" font-size="14">💛</text>
+              </svg>`
+      }
+    ];
+
+    /*************************************************************************
+     * 2. THREE.JS 3D SKY CASTLE PATHWAY, DOORS, AVATAR & COLLISION ENGINE
+     *************************************************************************/
+    let scene, camera, renderer;
+    let is2DFallbackActive = false;
+    const clock = new THREE.Clock();
+
+    const worldGroup = new THREE.Group();
+    const clouds = [];
+    const sparkles = [];
+    const doors3D = {}; // id -> { group, leftPivot, rightPivot, barrierMesh, triggerRing, lockStar }
+    let door3SculptureGroup;
+    let victoryPortalGroup, portalRing1, portalRing2, portalTrophy;
+    let confettiParticles = [];
+    let showConfetti = false;
+
+    // 3D Player Character & Limbs
+    let playerGroup, playerBodyGroup, leftLegPivot, rightLegPivot, leftArmPivot, rightArmPivot, playerCape;
+    const playerState = {
+      pos: new THREE.Vector3(0, 0, 24),
+      velY: 0,
+      isGrounded: true,
+      yaw: Math.PI, // Facing north (-Z) toward Door 1
+      walkCycle: 0,
+      speed: 10.5
+    };
+
+    // Input State (WASD/Arrows + Virtual Joystick)
+    const keysPressed = {};
+    const joyInput = { x: 0, y: 0, active: false };
+
+    // 3rd-Person Camera Orbit State
+    let camYaw = 0; // 0 = directly behind player looking toward -Z
+    let camPitch = 0.42;
+    let isOrbitDragging = false;
+    let lastDragPos = { x: 0, y: 0 };
+
+    // Pathway Bounds
+    const PATH_HALF_WIDTH = 7.2;
+    const Z_MAX = 27.5;
+    const Z_MIN = -84.0;
+
+    function getViewportDimensions() {
+      const w = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0, 320);
+      const h = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, 240);
+      return { w, h };
+    }
+
+    function start2DFallbackSanctuary(container) {
+      is2DFallbackActive = true;
+      container.innerHTML = "";
+      const c2d = document.createElement("canvas");
+      container.appendChild(c2d);
+      const ctx = c2d.getContext("2d");
+
+      function draw2D(t) {
+        const { w, h } = getViewportDimensions();
+        if (c2d.width !== w || c2d.height !== h) {
+          c2d.width = w;
+          c2d.height = h;
+        }
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, "#BAE0FF");
+        grad.addColorStop(0.55, "#EBF6FF");
+        grad.addColorStop(1, "#FFFBE6");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Drifting pastel clouds
+        ctx.fillStyle = "rgba(255, 255, 255, 0.82)";
+        for (let i = 0; i < 6; i++) {
+          const cx = ((i * 260 + t * 0.025) % (w + 220)) - 110;
+          const cy = 90 + (i % 3) * 75;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+          ctx.arc(cx + 28, cy - 8, 42, 0, Math.PI * 2);
+          ctx.arc(cx + 62, cy, 32, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Golden Pathway & 4 Archway Doors preview
+        ctx.fillStyle = "#FFF1A8";
+        ctx.beginPath();
+        ctx.moveTo(w * 0.36, h);
+        ctx.lineTo(w * 0.64, h);
+        ctx.lineTo(w * 0.54, h * 0.42);
+        ctx.lineTo(w * 0.46, h * 0.42);
+        ctx.closePath();
+        ctx.fill();
+
+        for (let d = 1; d <= 4; d++) {
+          const scale = 0.42 + d * 0.13;
+          const dy = h * (0.42 + d * 0.11);
+          const dw = 92 * scale;
+          const dh = 105 * scale;
+          ctx.fillStyle = gameState.unlockedDoors[d] ? "#34D399" : "#F59E0B";
+          ctx.fillRect(w * 0.5 - dw / 2, dy - dh, dw, dh);
+          ctx.fillStyle = "#EBF6FF";
+          ctx.fillRect(w * 0.5 - dw * 0.36, dy - dh * 0.85, dw * 0.72, dh * 0.85);
+        }
+        requestAnimationFrame(draw2D);
+      }
+      requestAnimationFrame(draw2D);
+    }
+
+    // Pastel Material & 3D Star Helpers
+    function matPastel(hex, emissiveHex = 0x000000, emissiveIntensity = 0) {
+      return new THREE.MeshStandardMaterial({
+        color: hex,
+        roughness: 0.48,
+        metalness: 0.08,
+        emissive: emissiveHex,
+        emissiveIntensity: emissiveIntensity
+      });
+    }
+
+    function createStar3D(radius = 0.6, depth = 0.2, colorHex = 0xF4C430) {
+      const shape = new THREE.Shape();
+      const spikes = 5;
+      const outerR = radius;
+      const innerR = radius * 0.46;
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / spikes - Math.PI / 2;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+      const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 2 });
+      geo.center();
+      return new THREE.Mesh(geo, matPastel(colorHex, colorHex, 0.25));
+    }
+
+    const DOOR_CONFIGS = [
+      { id: 1, z: 4, label: "Door 1: Introduce Yourself" },
+      { id: 2, z: -18, label: "Door 2: Conversation" },
+      { id: 3, z: -40, label: "Door 3: Describe It!" },
+      { id: 4, z: -62, label: "Door 4: Storytelling" }
+    ];
+    const SANCTUARY_Z = -79;
+    const PATH_Z_MIN = -83;
+    const PATH_Z_MAX = 26;
+
+    const floatingStars = [];
+    let playerBody, playerHead, playerCrown, trophyCup;
+    const playerPhysics = playerState;
+    const joystickVec = joyInput;
+    let isDraggingSky = false;
+    let lastPointer = { x: 0, y: 0 };
+    let camYawOffset = 0;
+    let camPitchOffset = 0;
+    const camSmoothPos = new THREE.Vector3(0, 6.2, 33);
+    const camSmoothLook = new THREE.Vector3(0, 1.8, 18);
+
+    function buildSkyAndClouds() {
+      for (let i = 0; i < 16; i++) {
+        const cloud = new THREE.Group();
+        const puffMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+        const p1 = new THREE.Mesh(new THREE.SphereGeometry(2.1, 14, 12), puffMat);
+        const p2 = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 10), puffMat);
+        p2.position.set(1.8, -0.3, 0.2);
+        const p3 = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 10), puffMat);
+        p3.position.set(-1.7, -0.35, -0.2);
+        cloud.add(p1, p2, p3);
+        const side = i % 2 === 0 ? -1 : 1;
+        cloud.position.set(side * (16 + Math.random() * 24), 4 + Math.random() * 14, 24 - i * 7.5);
+        cloud.userData = { baseY: cloud.position.y, phase: Math.random() * Math.PI * 2 };
+        worldGroup.add(cloud);
+        clouds.push(cloud);
+      }
+
+      for (let i = 0; i < 18; i++) {
+        const st = createStar3D(0.45, 0.14, 0xFFF1A8);
+        const side = i % 2 === 0 ? -1 : 1;
+        st.position.set(side * (9.5 + Math.random() * 8), 3.2 + Math.random() * 4, 20 - i * 5.8);
+        st.userData = { baseY: st.position.y, phase: i * 0.7 };
+        worldGroup.add(st);
+        floatingStars.push(st);
+      }
+    }
+
+    function buildSanctuaryCourtyardPathway() {
+      // Main Soft Pastel Blue & Butter-Yellow Sky Castle Bridge Deck
+      const deckLen = 114;
+      const deckGeo = new THREE.BoxGeometry(PATH_HALF_WIDTH * 2, 1.4, deckLen);
+      const deckMesh = new THREE.Mesh(deckGeo, matPastel(0xEBF6FF));
+      deckMesh.position.set(0, -0.7, -28);
+      deckMesh.receiveShadow = true;
+      worldGroup.add(deckMesh);
+
+      // Golden Center Carpet Runner
+      const runnerGeo = new THREE.BoxGeometry(4.2, 0.12, deckLen - 4);
+      const runnerMesh = new THREE.Mesh(runnerGeo, matPastel(0xFFF1A8));
+      runnerMesh.position.set(0, 0.04, -28);
+      runnerMesh.receiveShadow = true;
+      worldGroup.add(runnerMesh);
+
+      // Left & Right Pastel Blue Railings + Gold Pillars
+      const railGeo = new THREE.BoxGeometry(0.35, 0.25, deckLen);
+      const leftRail = new THREE.Mesh(railGeo, matPastel(0xBAE0FF));
+      leftRail.position.set(-PATH_HALF_WIDTH + 0.25, 1.05, -28);
+      const rightRail = leftRail.clone();
+      rightRail.position.x = PATH_HALF_WIDTH - 0.25;
+      worldGroup.add(leftRail, rightRail);
+
+      for (let z = 24; z >= -82; z -= 8) {
+        [-PATH_HALF_WIDTH + 0.25, PATH_HALF_WIDTH - 0.25].forEach((px) => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 1.35, 12), matPastel(0xFFFFFF));
+          post.position.set(px, 0.65, z);
+          const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), matPastel(0xF4C430));
+          cap.position.set(px, 1.42, z);
+          worldGroup.add(post, cap);
+        });
+      }
+    }
+
+    function buildFourGoldenDoors() {
+      DOOR_CONFIGS.forEach((cfg) => {
+        const doorFrameGroup = new THREE.Group();
+        doorFrameGroup.position.set(0, 0, cfg.z);
+
+        // Left & Right Marble Pillars + Top Arch Lintel
+        const pillarGeo = new THREE.BoxGeometry(1.15, 5.4, 1.15);
+        const leftPillar = new THREE.Mesh(pillarGeo, matPastel(0xFFFFFF));
+        leftPillar.position.set(-2.9, 2.7, 0);
+        leftPillar.castShadow = true;
+        const rightPillar = leftPillar.clone();
+        rightPillar.position.x = 2.9;
+
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(7.2, 1.1, 1.35), matPastel(0xBAE0FF));
+        lintel.position.set(0, 5.75, 0);
+        lintel.castShadow = true;
+
+        // Rotating Star Emblem above Door
+        const archStar = createStar3D(0.85, 0.26, 0xF4C430);
+        archStar.position.set(0, 7.05, 0);
+
+        // Hinged Left & Right Wooden-Gold Door Panels
+        const leftPivot = new THREE.Group();
+        leftPivot.position.set(-2.3, 0, 0);
+        const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(2.26, 5.1, 0.34), matPastel(0xFFF1A8));
+        leftPanel.position.set(1.13, 2.55, 0);
+        leftPanel.castShadow = true;
+        leftPivot.add(leftPanel);
+
+        const rightPivot = new THREE.Group();
+        rightPivot.position.set(2.3, 0, 0);
+        const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(2.26, 5.1, 0.34), matPastel(0xFFF1A8));
+        rightPanel.position.set(-1.13, 2.55, 0);
+        rightPanel.castShadow = true;
+        rightPivot.add(rightPanel);
+
+        // Glowing Floor Proximity Ring in front of Door
+        const proxRing = new THREE.Mesh(
+          new THREE.RingGeometry(1.45, 1.85, 32),
+          new THREE.MeshBasicMaterial({ color: 0xF4C430, side: THREE.DoubleSide })
+        );
+        proxRing.rotation.x = -Math.PI / 2;
+        proxRing.position.set(0, 0.12, 2.35);
+
+        doorFrameGroup.add(leftPillar, rightPillar, lintel, archStar, leftPivot, rightPivot, proxRing);
+        worldGroup.add(doorFrameGroup);
+
+        doors3D[cfg.id] = {
+          id: cfg.id,
+          z: cfg.z,
+          group: doorFrameGroup,
+          leftPivot,
+          rightPivot,
+          archStar,
+          emblemMat: archStar.material,
+          proxRing,
+          openAngle: 0,
+          targetOpenAngle: 0
+        };
+      });
+    }
+
+    function buildVictoryPortal() {
+      victoryPortalGroup = new THREE.Group();
+      victoryPortalGroup.position.set(0, 0, SANCTUARY_Z);
+
+      const dais = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.8, 0.45, 32), matPastel(0xFFF1A8));
+      dais.position.y = 0.22;
+      dais.receiveShadow = true;
+
+      const archRing = new THREE.Mesh(
+        new THREE.TorusGeometry(3.2, 0.32, 16, 40, Math.PI),
+        matPastel(0x5B9BD5)
+      );
+      archRing.position.y = 0.4;
+
+      trophyCup = createStar3D(1.15, 0.35, 0xF4C430);
+      trophyCup.position.set(0, 2.1, 0);
+
+      victoryPortalGroup.add(dais, archRing, trophyCup);
+      worldGroup.add(victoryPortalGroup);
+    }
+
+    function buildExplorerCharacter() {
+      buildPlayerExplorer();
+    }
+
+    function setupControls() {
+      setupInputListeners(document.getElementById("canvas-container"));
+    }
+
+    function startGame() {
+      gameState.started = true;
+      document.getElementById("welcome-overlay").classList.add("hidden");
+      document.getElementById("walk-controls-ui").classList.remove("hidden");
+      showToast("🚶", "Walk forward to Door 1 using WASD or the Joystick!");
+    }
+
+    function buildPlayerExplorer() {
+      playerGroup = new THREE.Group();
+      playerGroup.position.copy(playerPhysics.pos);
+      playerGroup.rotation.y = playerPhysics.yaw;
+
+      playerBodyGroup = new THREE.Group();
+
+      // Torso (Pastel Blue Tunic with Butter-Yellow Belt)
+      const torso = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.42, 0.48, 1.05, 16),
+        matPastel(0x5B9BD5)
+      );
+      torso.position.y = 1.15;
+      torso.castShadow = true;
+
+      const belt = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.47, 0.48, 0.16, 16),
+        matPastel(0xF4C430)
+      );
+      belt.position.y = 0.85;
+
+      // Flowing Yellow Cape
+      playerCape = new THREE.Mesh(
+        new THREE.BoxGeometry(0.76, 0.95, 0.08),
+        matPastel(0xFFF1A8)
+      );
+      playerCape.position.set(0, 1.15, -0.45);
+      playerCape.rotation.x = 0.18;
+
+      // Head & Star Crown
+      playerHead = new THREE.Mesh(
+        new THREE.SphereGeometry(0.44, 18, 16),
+        matPastel(0xFDE68A)
+      );
+      playerHead.position.y = 1.98;
+      playerHead.castShadow = true;
+
+      const eyeGeo = new THREE.SphereGeometry(0.06, 10, 10);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1E3A5F });
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.14, 2.02, 0.39);
+      const rightEye = leftEye.clone();
+      rightEye.position.x = 0.14;
+
+      playerCrown = createStar3D(0.28, 0.1, 0xF4C430);
+      playerCrown.position.set(0, 2.52, 0);
+
+      // Articulated Arms
+      const armGeo = new THREE.CylinderGeometry(0.11, 0.1, 0.72, 12);
+      leftArmPivot = new THREE.Group();
+      leftArmPivot.position.set(-0.56, 1.52, 0);
+      const leftArm = new THREE.Mesh(armGeo, matPastel(0xBAE0FF));
+      leftArm.position.y = -0.32;
+      leftArmPivot.add(leftArm);
+
+      rightArmPivot = new THREE.Group();
+      rightArmPivot.position.set(0.56, 1.52, 0);
+      const rightArm = new THREE.Mesh(armGeo, matPastel(0xBAE0FF));
+      rightArm.position.y = -0.32;
+      rightArmPivot.add(rightArm);
+
+      // Articulated Legs
+      const legGeo = new THREE.CylinderGeometry(0.13, 0.12, 0.68, 12);
+      leftLegPivot = new THREE.Group();
+      leftLegPivot.position.set(-0.2, 0.68, 0);
+      const leftLeg = new THREE.Mesh(legGeo, matPastel(0x1E3A5F));
+      leftLeg.position.y = -0.34;
+      leftLegPivot.add(leftLeg);
+
+      rightLegPivot = new THREE.Group();
+      rightLegPivot.position.set(0.2, 0.68, 0);
+      const rightLeg = new THREE.Mesh(legGeo, matPastel(0x1E3A5F));
+      rightLeg.position.y = -0.34;
+      rightLegPivot.add(rightLeg);
+
+      playerBodyGroup.add(
+        torso,
+        belt,
+        playerCape,
+        playerHead,
+        leftEye,
+        rightEye,
+        playerCrown,
+        leftArmPivot,
+        rightArmPivot,
+        leftLegPivot,
+        rightLegPivot
+      );
+      playerGroup.add(playerBodyGroup);
+      worldGroup.add(playerGroup);
+    }
+
+    function setupInputListeners(container) {
+      // Keyboard WASD / Arrow / Jump / Interact Controls
+      window.addEventListener("keydown", (e) => {
+        const tag = (e.target && e.target.tagName) || "";
+        if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+        const code = e.code;
+        keysPressed[code] = true;
+
+        if (!gameState.started || gameState.modalOpen || gameState.certificateShown) return;
+
+        if (code === "Space") {
+          e.preventDefault();
+          if (gameState.nearbyDoorId) {
+            handleInteractAction();
+          } else {
+            triggerPlayerJump();
+          }
+        } else if (code === "KeyE" || code === "Enter") {
+          if (gameState.nearbyDoorId) {
+            e.preventDefault();
+            handleInteractAction();
+          }
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        keysPressed[e.code] = false;
+      });
+
+      // Sky Drag Camera Orbit
+      if (container) {
+        container.addEventListener("pointerdown", (e) => {
+          isDraggingSky = true;
+          lastPointer = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener("pointermove", (e) => {
+          if (!isDraggingSky) return;
+          const dx = e.clientX - lastPointer.x;
+          const dy = e.clientY - lastPointer.y;
+          lastPointer = { x: e.clientX, y: e.clientY };
+          camYawOffset -= dx * 0.0055;
+          camPitchOffset = Math.max(-0.22, Math.min(0.45, camPitchOffset + dy * 0.004));
+        });
+        window.addEventListener("pointerup", () => {
+          isDraggingSky = false;
+        });
+      }
+
+      // On-Screen Virtual Joystick
+      const joyZone = document.getElementById("joystick-zone");
+      const joyKnob = document.getElementById("joystick-knob");
+      if (joyZone && joyKnob) {
+        const maxRadius = 38;
+        let activeTouchId = null;
+
+        function updateJoystickFromClient(clientX, clientY) {
+          const rect = joyZone.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          let dx = clientX - cx;
+          let dy = clientY - cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist > maxRadius) {
+            dx = (dx / dist) * maxRadius;
+            dy = (dy / dist) * maxRadius;
+          }
+          joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+          joystickVec.x = dx / maxRadius;
+          joystickVec.y = dy / maxRadius;
+        }
+
+        function resetJoystick() {
+          activeTouchId = null;
+          joystickVec.active = false;
+          joystickVec.x = 0;
+          joystickVec.y = 0;
+          joyKnob.style.transform = "translate(-50%, -50%)";
+        }
+
+        joyZone.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          activeTouchId = e.pointerId;
+          joystickVec.active = true;
+          joyZone.setPointerCapture(e.pointerId);
+          updateJoystickFromClient(e.clientX, e.clientY);
+        });
+
+        joyZone.addEventListener("pointermove", (e) => {
+          if (e.pointerId !== activeTouchId) return;
+          updateJoystickFromClient(e.clientX, e.clientY);
+        });
+
+        joyZone.addEventListener("pointerup", (e) => {
+          if (e.pointerId === activeTouchId) resetJoystick();
+        });
+        joyZone.addEventListener("pointercancel", resetJoystick);
+      }
+    }
+
+    function triggerPlayerJump() {
+      if (!gameState.started || gameState.modalOpen || gameState.certificateShown) return;
+      if (playerPhysics.isGrounded) {
+        playerPhysics.velY = 8.4;
+        playerPhysics.isGrounded = false;
+      }
+    }
+
+    function handleInteractAction() {
+      if (!gameState.nearbyDoorId) return;
+      if (gameState.nearbyDoorId === "sanctuary") {
+        if (allFourDoorsUnlocked()) {
+          openFinalCertificate();
+        } else {
+          showToast("🔒", "Unlock all 4 Doors along the pathway first!");
+        }
+      } else {
+        openDoorAssessmentModal(gameState.nearbyDoorId);
+      }
+    }
+
+    function teleportToNextDoor() {
+      if (!gameState.started) startGame();
+      if (gameState.modalOpen) closeDoorModal();
+
+      let nextId = null;
+      for (let i = 1; i <= 4; i++) {
+        if (!gameState.unlockedDoors[i]) {
+          nextId = i;
+          break;
+        }
+      }
+
+      if (nextId) {
+        const cfg = DOOR_CONFIGS.find((d) => d.id === nextId);
+        playerPhysics.pos.set(0, 0, cfg.z + 3.2);
+        playerPhysics.yaw = Math.PI;
+        camYawOffset = 0;
+        showToast("✨", `Teleported to Door ${nextId}! Press E or tap the prompt to speak!`);
+      } else {
+        playerPhysics.pos.set(0, 0, SANCTUARY_Z + 4.2);
+        playerPhysics.yaw = Math.PI;
+        camYawOffset = 0;
+        showToast("🏆", "Teleported to the Victory Sanctuary!");
+      }
+    }
+
+    function initConfettiPool() {
+      const colors = [0xF4C430, 0x5B9BD5, 0x77DD77, 0xFF9AA2, 0xFFF1A8];
+      const geo = new THREE.BoxGeometry(0.18, 0.12, 0.04);
+      for (let i = 0; i < 65; i++) {
+        const mesh = new THREE.Mesh(geo, matPastel(colors[i % colors.length]));
+        mesh.visible = false;
+        mesh.userData = { vel: new THREE.Vector3(), rotVel: new THREE.Vector3(), life: 0 };
+        worldGroup.add(mesh);
+        confettiParticles.push(mesh);
+      }
+    }
+
+    function triggerBurstConfetti(originVec) {
+      showConfetti = true;
+      confettiParticles.forEach((p) => {
+        p.visible = true;
+        p.position.copy(originVec);
+        p.position.x += (Math.random() - 0.5) * 3.5;
+        p.position.y += 1 + Math.random() * 2;
+        p.userData.vel.set(
+          (Math.random() - 0.5) * 6,
+          4 + Math.random() * 5,
+          (Math.random() - 0.5) * 6
+        );
+        p.userData.rotVel.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+        p.userData.life = 2.6;
+      });
+    }
+
+    function initThreeWorld() {
+      const container = document.getElementById("canvas-container");
+      if (!container) return;
+
+      if (typeof THREE === "undefined") {
+        start2DFallbackSanctuary(container);
+        return;
+      }
+
+      try {
+        container.innerHTML = "";
+        const { w, h } = getViewportDimensions();
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xBAE0FF);
+        scene.fog = new THREE.FogExp2(0xEBF6FF, 0.0085);
+
+        camera = new THREE.PerspectiveCamera(56, w / h, 0.1, 260);
+        camera.position.set(0, 6.2, 33);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setSize(w, h, false);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Soft Pastel Sky & Warm Sunlight
+        const hemiLight = new THREE.HemisphereLight(0xFFFFFF, 0xFFF1A8, 0.95);
+        hemiLight.position.set(0, 40, 0);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xFFFBE6, 0.85);
+        dirLight.position.set(18, 34, 22);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        scene.add(worldGroup);
+
+        buildSkyAndClouds();
+        buildSanctuaryCourtyardPathway();
+        buildFourGoldenDoors();
+        buildVictoryPortal();
+        buildExplorerCharacter();
+        initConfettiPool();
+        setupControls();
+
+        window.addEventListener("resize", onWindowResize);
+        if (typeof ResizeObserver !== "undefined") {
+          const ro = new ResizeObserver(() => onWindowResize());
+          ro.observe(container);
+        }
+        setTimeout(onWindowResize, 100);
+        setTimeout(onWindowResize, 500);
+      } catch (err) {
+        start2DFallbackSanctuary(container);
+      }
+    }
+
+    function updatePlayerAndWorld(dt) {
+      const elapsed = clock.getElapsedTime();
+
+      // Animate floating clouds & stars
+      clouds.forEach((c) => {
+        c.position.y = c.userData.baseY + Math.sin(elapsed * 0.7 + c.userData.phase) * 0.45;
+      });
+      floatingStars.forEach((s) => {
+        s.rotation.y += dt * 1.4;
+        s.position.y = s.userData.baseY + Math.sin(elapsed * 1.8 + s.userData.phase) * 0.28;
+      });
+
+      // Animate 4 Doors swinging open & ring pulse
+      Object.values(doors3D).forEach((d) => {
+        d.archStar.rotation.y += dt * 1.5;
+        d.openAngle += (d.targetOpenAngle - d.openAngle) * Math.min(1, dt * 5.5);
+        d.leftPivot.rotation.y = -d.openAngle;
+        d.rightPivot.rotation.y = d.openAngle;
+        if (d.proxRing.visible) {
+          const pulse = 1 + Math.sin(elapsed * 4) * 0.08;
+          d.proxRing.scale.set(pulse, pulse, 1);
+        }
+      });
+
+      if (trophyCup) {
+        trophyCup.rotation.y += dt * 1.6;
+        trophyCup.position.y = 2.1 + Math.sin(elapsed * 2.2) * 0.2;
+      }
+
+      // Confetti Physics
+      if (showConfetti) {
+        let anyAlive = false;
+        confettiParticles.forEach((p) => {
+          if (!p.visible) return;
+          p.userData.life -= dt;
+          if (p.userData.life <= 0) {
+            p.visible = false;
+            return;
+          }
+          anyAlive = true;
+          p.userData.vel.y -= 9.8 * dt;
+          p.position.addScaledVector(p.userData.vel, dt);
+          p.rotation.x += p.userData.rotVel.x * dt;
+          p.rotation.y += p.userData.rotVel.y * dt;
+        });
+        if (!anyAlive) showConfetti = false;
+      }
+
+      // Movement Input Vector
+      let moveX = joystickVec.x;
+      let moveZ = joystickVec.y;
+
+      if (keysPressed["KeyW"] || keysPressed["ArrowUp"]) moveZ -= 1;
+      if (keysPressed["KeyS"] || keysPressed["ArrowDown"]) moveZ += 1;
+      if (keysPressed["KeyA"] || keysPressed["ArrowLeft"]) moveX -= 1;
+      if (keysPressed["KeyD"] || keysPressed["ArrowRight"]) moveX += 1;
+
+      const canMove = gameState.started && !gameState.modalOpen && !gameState.certificateShown;
+      const inputLen = Math.hypot(moveX, moveZ);
+
+      if (canMove && inputLen > 0.05) {
+        const nx = moveX / Math.max(1, inputLen);
+        const nz = moveZ / Math.max(1, inputLen);
+
+        // Rotate movement relative to camera yaw offset
+        const sinY = Math.sin(camYawOffset);
+        const cosY = Math.cos(camYawOffset);
+        const worldVX = (nx * cosY + nz * sinY) * playerPhysics.speed;
+        const worldVZ = (-nx * sinY + nz * cosY) * playerPhysics.speed;
+
+        let nextX = playerPhysics.pos.x + worldVX * dt;
+        let nextZ = playerPhysics.pos.z + worldVZ * dt;
+
+        // Clamp inside pathway railings
+        nextX = Math.max(-PATH_HALF_WIDTH + 1.1, Math.min(PATH_HALF_WIDTH - 1.1, nextX));
+        nextZ = Math.max(PATH_Z_MIN, Math.min(PATH_Z_MAX, nextZ));
+
+        // Solid Collision with Locked Doors (blocks walking past until unlocked)
+        for (const cfg of DOOR_CONFIGS) {
+          if (!gameState.unlockedDoors[cfg.id]) {
+            const minAllowedZ = cfg.z + 1.15;
+            if (playerPhysics.pos.z >= minAllowedZ - 0.3 && nextZ < minAllowedZ) {
+              nextZ = minAllowedZ;
+            }
+          }
+        }
+
+        playerPhysics.pos.x = nextX;
+        playerPhysics.pos.z = nextZ;
+
+        // Smoothly turn explorer toward movement direction
+        const targetYaw = Math.atan2(worldVX, worldVZ);
+        let diff = targetYaw - playerPhysics.yaw;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        playerPhysics.yaw += diff * Math.min(1, dt * 12);
+
+        // Walking Limb Swing Animation
+        playerPhysics.walkCycle += dt * 11;
+        const swing = Math.sin(playerPhysics.walkCycle) * 0.65;
+        leftLegPivot.rotation.x = swing;
+        rightLegPivot.rotation.x = -swing;
+        leftArmPivot.rotation.x = -swing * 0.75;
+        rightArmPivot.rotation.x = swing * 0.75;
+        playerBodyGroup.position.y = Math.abs(Math.cos(playerPhysics.walkCycle)) * 0.1;
+      } else {
+        // Return limbs smoothly to idle pose
+        leftLegPivot.rotation.x *= 0.82;
+        rightLegPivot.rotation.x *= 0.82;
+        leftArmPivot.rotation.x *= 0.82;
+        rightArmPivot.rotation.x *= 0.82;
+        playerBodyGroup.position.y *= 0.82;
+      }
+
+      // Vertical Jump & Gravity Physics
+      if (!playerPhysics.isGrounded) {
+        playerPhysics.velY -= 22 * dt;
+        playerPhysics.pos.y += playerPhysics.velY * dt;
+        if (playerPhysics.pos.y <= 0) {
+          playerPhysics.pos.y = 0;
+          playerPhysics.velY = 0;
+          playerPhysics.isGrounded = true;
+        }
+      }
+
+      if (playerGroup) {
+        playerGroup.position.copy(playerPhysics.pos);
+        playerGroup.rotation.y = playerPhysics.yaw;
+      }
+
+      // Check Proximity to Doors or Victory Sanctuary
+      updateDoorProximityPrompt();
+
+      // Smooth 3rd-Person Follow Camera
+      if (camera && playerGroup) {
+        const camDist = 9.4;
+        const camHeight = 4.6 + camPitchOffset * 6.5;
+        const desiredCamPos = new THREE.Vector3(
+          playerPhysics.pos.x + Math.sin(camYawOffset) * camDist,
+          playerPhysics.pos.y + camHeight,
+          playerPhysics.pos.z + Math.cos(camYawOffset) * camDist
+        );
+        const desiredLook = new THREE.Vector3(
+          playerPhysics.pos.x,
+          playerPhysics.pos.y + 1.8,
+          playerPhysics.pos.z - 3.5
+        );
+
+        camSmoothPos.lerp(desiredCamPos, Math.min(1, dt * 7));
+        camSmoothLook.lerp(desiredLook, Math.min(1, dt * 9));
+        camera.position.copy(camSmoothPos);
+        camera.lookAt(camSmoothLook);
+      }
+    }
+
+    function updateDoorProximityPrompt() {
+      const banner = document.getElementById("door-proximity-banner");
+      const hudInteract = document.getElementById("btn-hud-interact");
+      if (!gameState.started || gameState.modalOpen || gameState.certificateShown) {
+        banner.classList.add("hidden");
+        hudInteract.classList.add("hidden");
+        return;
+      }
+
+      let foundId = null;
+      for (const cfg of DOOR_CONFIGS) {
+        if (!gameState.unlockedDoors[cfg.id] && Math.abs(playerPhysics.pos.z - cfg.z) < 4.4) {
+          foundId = cfg.id;
+          break;
+        }
+      }
+
+      if (!foundId && Math.abs(playerPhysics.pos.z - SANCTUARY_Z) < 5.2) {
+        foundId = "sanctuary";
+      }
+
+      gameState.nearbyDoorId = foundId;
+
+      if (foundId === "sanctuary") {
+        banner.classList.remove("hidden");
+        hudInteract.classList.remove("hidden");
+        document.getElementById("door-prompt-icon").textContent = "🏆";
+        document.getElementById("door-prompt-text").textContent = allFourDoorsUnlocked()
+          ? "Victory Sanctuary Reached! [Claim Champion Certificate]"
+          : "Victory Sanctuary! Unlock all 4 Doors first!";
+        hudInteract.innerHTML = "<span>🏆 Claim Certificate</span>";
+      } else if (foundId) {
+        banner.classList.remove("hidden");
+        hudInteract.classList.remove("hidden");
+        document.getElementById("door-prompt-icon").textContent = "🚪";
+        document.getElementById("door-prompt-text").textContent = `Door ${foundId} Reached! [Start Speaking Challenge]`;
+        hudInteract.innerHTML = `<span>🚪 Open Door ${foundId}</span>`;
+      } else {
+        banner.classList.add("hidden");
+        hudInteract.classList.add("hidden");
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (is2DFallbackActive || !renderer || !scene || !camera) return;
+      const dt = Math.min(clock.getDelta(), 0.05);
+      updatePlayerAndWorld(dt);
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+      if (!camera || !renderer || is2DFallbackActive) return;
+      const { w, h } = getViewportDimensions();
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+
+    /*************************************************************************
+     * 5. DOOR SPEAKING ASSESSMENTS (CHALLENGES 1 TO 4)
+     *************************************************************************/
+    function openDoorAssessmentModal(doorId) {
+      gameState.activeDoorId = doorId;
+      gameState.modalOpen = true;
+      // Clear held movement keys so avatar stops cleanly
+      Object.keys(keysPressed).forEach((k) => (keysPressed[k] = false));
+      joystickVec.x = 0;
+      joystickVec.y = 0;
+
+      resetRecordingUIOnly();
+
+      const subEl = document.getElementById("modal-door-sub");
+      const titleEl = document.getElementById("modal-door-title");
+      const instrEl = document.getElementById("modal-door-instruction");
+      const dynEl = document.getElementById("modal-dynamic-content");
+
+      subEl.textContent = `DOOR ${doorId} ASSESSMENT • CHALLENGE ${doorId} OF 4`;
+
+      if (doorId === 1) {
+        titleEl.textContent = "Challenge 1: Introduce Yourself";
+        instrEl.textContent = "Introduce yourself using at least four simple sentences.";
+        renderChallenge1(dynEl);
+      } else if (doorId === 2) {
+        titleEl.textContent = "Challenge 2: Let’s Have a Conversation";
+        instrEl.textContent = "Work with a partner. Ask and answer at least three questions.";
+        renderChallenge2(dynEl);
+      } else if (doorId === 3) {
+        titleEl.textContent = "Challenge 3: Describe It!";
+        instrEl.textContent = "Choose a picture and describe the person or object using suitable sentences.";
+        renderChallenge3(dynEl);
+      } else if (doorId === 4) {
+        titleEl.textContent = "Challenge 4: Storytelling Time";
+        instrEl.textContent = "Look at the pictures and narrate a short story using your own words.";
+        renderChallenge4(dynEl);
+      }
+
+      document.getElementById("door-modal-overlay").classList.remove("hidden");
+    }
+
+    function closeDoorModal() {
+      if (gameState.isRecording) stopRecording();
+      gameState.modalOpen = false;
+      document.getElementById("door-modal-overlay").classList.add("hidden");
+    }
+
+    // --- CHALLENGE 1: INTRODUCE YOURSELF ---
+    function renderChallenge1(container) {
+      const starters = [
+        "My name is...",
+        "I am ten years old.",
+        "I live in...",
+        "My favourite hobby is...",
+        "I love learning English."
+      ];
+
+      container.innerHTML = `
+        <div class="space-y-1.5">
+          <div class="text-xs font-extrabold text-[#1E3A5F]/80">Tap starter chips to add ideas to your cue card:</div>
+          <div class="flex flex-wrap gap-1.5">
+            ${starters.map((s) => `
+              <button type="button" onclick="appendCh1Starter('${s.replace(/'/g, "\\'")}')" class="btn-game px-2.5 py-1 rounded-xl bg-[#EBF6FF] hover:bg-[#BAE0FF] border border-[#5B9BD5]/50 text-xs font-bold text-[#1E3A5F]">
+                + ${s}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label for="ch1-textarea" class="text-xs font-extrabold text-[#1E3A5F]">Your Speaking Cue Card:</label>
+            <span id="ch1-sentence-badge" class="text-xs font-display font-bold px-2.5 py-0.5 rounded-full bg-[#77DD77]/40 text-[#1E3A5F]">
+              0 / 4 sentences
+            </span>
+          </div>
+          <textarea id="ch1-textarea" rows="3" oninput="updateCh1SentenceCount()" class="w-full rounded-2xl p-3 text-xs sm:text-sm font-bold text-[#1E3A5F] bg-white border-2 border-[#BAE0FF] focus:border-[#5B9BD5] focus:outline-none">${gameState.ch1Text}</textarea>
+        </div>
+      `;
+      updateCh1SentenceCount();
+    }
+
+    function appendCh1Starter(starter) {
+      const ta = document.getElementById("ch1-textarea");
+      if (!ta) return;
+      const val = ta.value.trim();
+      ta.value = val ? `${val} ${starter}` : starter;
+      updateCh1SentenceCount();
+    }
+
+    function updateCh1SentenceCount() {
+      const ta = document.getElementById("ch1-textarea");
+      const badge = document.getElementById("ch1-sentence-badge");
+      if (!ta || !badge) return;
+      gameState.ch1Text = ta.value;
+
+      const count = ta.value
+        .split(/[.!?]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 3).length;
+
+      if (count >= 4) {
+        badge.textContent = `✅ ${count} / 4 sentences ready!`;
+        badge.className = "text-xs font-display font-bold px-2.5 py-0.5 rounded-full bg-[#77DD77]/55 text-[#1E3A5F] border border-[#48B048]/40";
+      } else {
+        badge.textContent = `${count} / 4 sentences`;
+        badge.className = "text-xs font-display font-bold px-2.5 py-0.5 rounded-full bg-[#FFF1A8] text-[#1E3A5F] border border-[#F4C430]";
+      }
+    }
+
+    // --- CHALLENGE 2: LET'S HAVE A CONVERSATION ---
+    function renderChallenge2(container) {
+      const isBot = gameState.ch2Mode === "bot";
+      let bodyHtml = "";
+
+      if (isBot) {
+        const turn = CH2_BOT_TURNS[gameState.ch2BotStep];
+        bodyHtml = `
+          <div class="bg-[#EBF6FF] border-2 border-[#5B9BD5]/60 rounded-2xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-display font-bold text-[#1E3A5F]">🤖 3D Partner Bot (Question ${gameState.ch2BotStep + 1} of 3)</span>
+              <div class="flex gap-1">
+                ${[0, 1, 2].map((i) => `
+                  <button onclick="setCh2BotStep(${i})" class="w-6 h-6 rounded-full text-xs font-display font-bold ${i === gameState.ch2BotStep ? 'bg-[#F4C430] text-[#1E3A5F] border border-white' : 'bg-white text-[#1E3A5F]/60'}">${i + 1}</button>
+                `).join("")}
+              </div>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-xs sm:text-sm font-extrabold text-[#1E3A5F] border border-[#BAE0FF]">
+              “${turn.botSays}”
+            </div>
+            <div class="text-xs font-bold text-[#1E3A5F] bg-[#FFFBE6] p-2.5 rounded-xl border border-[#FFF1A8]">
+              🗣️ <strong>Your Turn:</strong> ${turn.pupilHint}
+            </div>
+            <div class="flex justify-end">
+              <button onclick="setCh2BotStep((gameState.ch2BotStep + 1) % 3)" class="btn-game btn-sky px-3 py-1.5 rounded-xl text-xs font-display font-bold">
+                Next Question Turn ➡️
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        const card = CH2_PARTNER_CARDS[gameState.ch2PartnerIdx];
+        bodyHtml = `
+          <div class="bg-[#FFFBE6] border-2 border-[#F4C430] rounded-2xl p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-display font-bold text-[#1E3A5F]">👫 ${card.qTitle}</span>
+              <div class="flex gap-1">
+                ${[0, 1, 2].map((i) => `
+                  <button onclick="setCh2PartnerCard(${i})" class="w-6 h-6 rounded-full text-xs font-display font-bold ${i === gameState.ch2PartnerIdx ? 'bg-[#5B9BD5] text-white' : 'bg-white text-[#1E3A5F]/60'}">${i + 1}</button>
+                `).join("")}
+              </div>
+            </div>
+            <div class="bg-white rounded-xl p-2.5 text-xs sm:text-sm font-bold text-[#1E3A5F] border border-[#BAE0FF]">
+              🔵 ${card.askPrompt}
+            </div>
+            <div class="bg-white rounded-xl p-2.5 text-xs sm:text-sm font-bold text-[#1E3A5F] border border-[#FFF1A8]">
+              🟡 ${card.answerPrompt}
+            </div>
+            <div class="flex justify-end">
+              <button onclick="setCh2PartnerCard((gameState.ch2PartnerIdx + 1) % 3)" class="btn-game btn-butter px-3 py-1.5 rounded-xl text-xs font-display font-bold">
+                Next Partner Card ➡️
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="grid grid-cols-2 gap-2 bg-white/80 p-1.5 rounded-2xl border border-[#BAE0FF]">
+          <button onclick="setCh2Mode('bot')" class="btn-game py-2 px-2 rounded-xl font-display font-bold text-xs sm:text-sm ${isBot ? 'bg-[#5B9BD5] text-white shadow-sm' : 'text-[#1E3A5F]'}">
+            🤖 3D Partner Bot Mode
+          </button>
+          <button onclick="setCh2Mode('partner')" class="btn-game py-2 px-2 rounded-xl font-display font-bold text-xs sm:text-sm ${!isBot ? 'bg-[#F4C430] text-[#1E3A5F] shadow-sm' : 'text-[#1E3A5F]'}">
+            👫 Classroom Partner Mode
+          </button>
+        </div>
+        ${bodyHtml}
+      `;
+    }
+
+    function setCh2Mode(mode) {
+      gameState.ch2Mode = mode;
+      renderChallenge2(document.getElementById("modal-dynamic-content"));
+    }
+    function setCh2BotStep(idx) {
+      gameState.ch2BotStep = idx;
+      renderChallenge2(document.getElementById("modal-dynamic-content"));
+    }
+    function setCh2PartnerCard(idx) {
+      gameState.ch2PartnerIdx = idx;
+      renderChallenge2(document.getElementById("modal-dynamic-content"));
+    }
+
+    // --- CHALLENGE 3: DESCRIBE IT! ---
+    function renderChallenge3(container) {
+      const selectedItem = CH3_PICTURES[gameState.ch3Choice];
+
+      container.innerHTML = `
+        <div class="space-y-1.5">
+          <div class="text-xs font-extrabold text-[#1E3A5F]/85">1. Choose a picture card to describe:</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            ${Object.values(CH3_PICTURES).map((item) => {
+              const active = item.id === gameState.ch3Choice;
+              return `
+                <button onclick="selectCh3Picture('${item.id}')" class="btn-game p-2 rounded-2xl border-2 text-center space-y-1 ${active ? 'bg-[#FFF1A8] border-[#F4C430] shadow-md' : 'bg-white/90 border-[#BAE0FF]'}">
+                  ${item.svg}
+                  <div class="font-display font-bold text-xs text-[#1E3A5F]">${item.emoji} ${item.name}</div>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="text-xs font-extrabold text-[#1E3A5F]/85">2. Tap descriptive adjectives & phrases:</div>
+          <div class="flex flex-wrap gap-1.5">
+            ${selectedItem.chips.map((w) => `
+              <button onclick="appendCh3Chip('${w}')" class="btn-game px-2.5 py-1 rounded-xl bg-[#EBF6FF] hover:bg-[#BAE0FF] border border-[#5B9BD5]/50 text-xs font-bold text-[#1E3A5F]">
+                + ${w}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label for="ch3-textarea" class="text-xs font-extrabold text-[#1E3A5F]">3. Your Description Sentences:</label>
+          <textarea id="ch3-textarea" rows="2" oninput="gameState.ch3Notes = this.value" class="w-full rounded-2xl p-2.5 text-xs sm:text-sm font-bold text-[#1E3A5F] bg-white border-2 border-[#BAE0FF] focus:border-[#5B9BD5] focus:outline-none">${gameState.ch3Notes}</textarea>
+        </div>
+      `;
+    }
+
+    function selectCh3Picture(id) {
+      gameState.ch3Choice = id;
+      gameState.ch3Notes = CH3_PICTURES[id].defaultNote;
+      renderChallenge3(document.getElementById("modal-dynamic-content"));
+    }
+
+    function appendCh3Chip(phrase) {
+      const ta = document.getElementById("ch3-textarea");
+      if (!ta) return;
+      ta.value = `${ta.value.trim()} It is ${phrase}.`;
+      gameState.ch3Notes = ta.value;
+    }
+
+    // --- CHALLENGE 4: STORYTELLING TIME ---
+    function renderChallenge4(container) {
+      const seqButtons = ["First,", "Next,", "Then,", "Finally,"];
+
+      container.innerHTML = `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-display font-bold text-[#1E3A5F]">📖 “The Lost Kitten’s Rainy Adventure”</span>
+            <span class="text-[11px] font-bold text-[#5B9BD5]">Tap each panel as you tell your story!</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            ${CH4_STORY_PANELS.map((p, idx) => {
+              const active = idx === gameState.ch4ActivePanel;
+              return `
+                <div onclick="selectCh4Panel(${idx})" class="cursor-pointer rounded-2xl p-2 border-2 transition-all ${active ? 'bg-[#FFFBE6] border-[#F4C430] shadow-md' : 'bg-white/90 border-[#BAE0FF]'}">
+                  ${p.svg}
+                  <div class="mt-1 font-display font-bold text-xs text-[#1E3A5F]">${p.step} ${p.title}</div>
+                  <div class="text-[11px] font-semibold text-[#1E3A5F]/80 leading-snug">${p.caption}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-xs font-extrabold text-[#1E3A5F]">Sequence words:</span>
+          ${seqButtons.map((word, idx) => `
+            <button onclick="appendCh4SeqWord('${word}', ${idx})" class="btn-game px-2.5 py-1 rounded-xl bg-[#FFF1A8] hover:bg-[#F4C430] border border-white text-xs font-display font-bold text-[#1E3A5F]">
+              + ${word}
+            </button>
+          `).join("")}
+        </div>
+
+        <div>
+          <textarea id="ch4-textarea" rows="2" oninput="gameState.ch4Notes = this.value" class="w-full rounded-2xl p-2.5 text-xs font-bold text-[#1E3A5F] bg-white border-2 border-[#BAE0FF] focus:border-[#5B9BD5] focus:outline-none">${gameState.ch4Notes}</textarea>
+        </div>
+      `;
+    }
+
+    function selectCh4Panel(idx) {
+      gameState.ch4ActivePanel = idx;
+      renderChallenge4(document.getElementById("modal-dynamic-content"));
+    }
+
+    function appendCh4SeqWord(word, idx) {
+      gameState.ch4ActivePanel = idx;
+      const ta = document.getElementById("ch4-textarea");
+      if (ta) {
+        ta.value = `${ta.value.trim()} ${word} `;
+        gameState.ch4Notes = ta.value;
+      }
+      renderChallenge4(document.getElementById("modal-dynamic-content"));
+    }
+
+    /*************************************************************************
+     * 6. REAL VOICE RECORDING (MediaRecorder + Web Audio AnalyserNode)
+     *************************************************************************/
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioStream = null;
+    let audioCtx = null;
+    let analyserNode = null;
+    let eqAnimId = null;
+    let recTimerInterval = null;
+    let recSeconds = 0;
+
+    async function startRecording() {
+      document.getElementById("mic-error-box").classList.add("hidden");
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showMicError("Microphone recording is not available in this browser frame. Click 'Open Full Tab (Enable Mic)' or 'Practice Without Mic (Self-Check)'!");
+        return;
+      }
+
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        let options = {};
+        if (typeof MediaRecorder !== "undefined") {
+          if (MediaRecorder.isTypeSupported("audio/webm")) {
+            options = { mimeType: "audio/webm" };
+          } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+            options = { mimeType: "audio/mp4" };
+          }
+        }
+
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(audioStream, options);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const mimeType = mediaRecorder.mimeType || "audio/webm";
+          const blob = new Blob(audioChunks, { type: mimeType });
+          if (gameState.audioUrl) URL.revokeObjectURL(gameState.audioUrl);
+          gameState.audioUrl = URL.createObjectURL(blob);
+
+          const player = document.getElementById("audio-playback");
+          player.src = gameState.audioUrl;
+          document.getElementById("audio-player-wrap").classList.remove("hidden");
+          document.getElementById("btn-play").classList.remove("hidden");
+          document.getElementById("btn-again").classList.remove("hidden");
+
+          revealChecklist("Great recording! Listen to your voice and complete the self-check below.");
+        };
+
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        const src = audioCtx.createMediaStreamSource(audioStream);
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 64;
+        src.connect(analyserNode);
+
+        mediaRecorder.start();
+        gameState.isRecording = true;
+
+        const btnRec = document.getElementById("btn-record");
+        const btnStop = document.getElementById("btn-stop");
+        btnRec.classList.add("hidden");
+        btnStop.classList.remove("hidden");
+        btnStop.classList.add("recording-active");
+        document.getElementById("btn-play").classList.add("hidden");
+        document.getElementById("btn-again").classList.add("hidden");
+        document.getElementById("audio-player-wrap").classList.add("hidden");
+        document.getElementById("eq-status-text").textContent = "Listening... Speak clearly into your mic!";
+
+        recSeconds = 0;
+        updateRecTimer();
+        recTimerInterval = setInterval(() => {
+          recSeconds++;
+          updateRecTimer();
+        }, 1000);
+
+        runEqualizerBars();
+      } catch (err) {
+        showMicError("Microphone access was blocked in this preview window. Click 'Open Full Tab (Enable Mic)' or use 'Practice Without Mic (Self-Check)'!");
+      }
+    }
+
+    function runEqualizerBars() {
+      const bars = document.querySelectorAll(".eq-bar");
+      const data = new Uint8Array(analyserNode ? analyserNode.frequencyBinCount : 16);
+
+      function loop() {
+        if (!gameState.isRecording) return;
+        if (analyserNode) {
+          analyserNode.getByteFrequencyData(data);
+          bars.forEach((bar, i) => {
+            const val = data[i % data.length] || 0;
+            const pct = Math.max(18, Math.min(95, (val / 255) * 100));
+            bar.style.height = `${pct}%`;
+          });
+        }
+        eqAnimId = requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    function stopRecording() {
+      gameState.isRecording = false;
+      if (eqAnimId) cancelAnimationFrame(eqAnimId);
+      if (recTimerInterval) clearInterval(recTimerInterval);
+
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach((t) => t.stop());
+        audioStream = null;
+      }
+      if (audioCtx && audioCtx.state !== "closed") {
+        audioCtx.close().catch(() => {});
+      }
+
+      document.querySelectorAll(".eq-bar").forEach((bar, i) => {
+        bar.style.height = `${24 + (i % 3) * 10}%`;
+      });
+
+      const btnRec = document.getElementById("btn-record");
+      const btnStop = document.getElementById("btn-stop");
+      btnStop.classList.add("hidden");
+      btnStop.classList.remove("recording-active");
+      btnRec.classList.remove("hidden");
+      btnRec.innerHTML = "<span>🔴 RECORD NEW TAKE</span>";
+      document.getElementById("eq-status-text").textContent = "Recording saved! Press Play to listen.";
+    }
+
+    function playRecording() {
+      const player = document.getElementById("audio-playback");
+      if (player && player.src) player.play().catch(() => {});
+    }
+
+    function resetRecording() {
+      resetRecordingUIOnly();
+      showToast("🔄", "Ready to record again!");
+    }
+
+    function resetRecordingUIOnly() {
+      gameState.isRecording = false;
+      const btnRec = document.getElementById("btn-record");
+      const btnStop = document.getElementById("btn-stop");
+      btnRec.classList.remove("hidden");
+      btnRec.innerHTML = "<span>🔴 RECORD MY VOICE</span>";
+      btnStop.classList.add("hidden");
+      btnStop.classList.remove("recording-active");
+      document.getElementById("btn-play").classList.add("hidden");
+      document.getElementById("btn-again").classList.add("hidden");
+      document.getElementById("audio-player-wrap").classList.add("hidden");
+      document.getElementById("mic-error-box").classList.add("hidden");
+      document.getElementById("rec-timer").textContent = "00:00";
+      document.getElementById("eq-status-text").textContent = "Press Record and speak clearly!";
+
+      const isAlreadyDone = gameState.unlockedDoors[gameState.activeDoorId];
+      ["chk-1", "chk-2", "chk-3"].forEach((id) => {
+        document.getElementById(id).checked = isAlreadyDone;
+      });
+      document.getElementById("checklist-card").classList.toggle("hidden", !isAlreadyDone);
+      evaluateChecklist();
+    }
+
+    function practiceWithoutMic() {
+      document.getElementById("mic-error-box").classList.add("hidden");
+      document.getElementById("eq-status-text").textContent = "Spoken aloud! Complete your self-checklist below.";
+      revealChecklist("Great speaking practice! Tick the 3 self-check boxes to unlock the Door.");
+    }
+
+    function revealChecklist(msg) {
+      document.getElementById("checklist-card").classList.remove("hidden");
+      showToast("🎙️", msg);
+    }
+
+    function showMicError(msg) {
+      document.getElementById("mic-error-msg").textContent = msg;
+      document.getElementById("mic-error-box").classList.remove("hidden");
+    }
+
+    function updateRecTimer() {
+      const m = String(Math.floor(recSeconds / 60)).padStart(2, "0");
+      const s = String(recSeconds % 60).padStart(2, "0");
+      document.getElementById("rec-timer").textContent = `${m}:${s}`;
+    }
+
+    /*************************************************************************
+     * 7. CHECKLIST EVALUATION, DOOR UNLOCKING & FINAL CERTIFICATE
+     *************************************************************************/
+    function evaluateChecklist() {
+      const c1 = document.getElementById("chk-1").checked;
+      const c2 = document.getElementById("chk-2").checked;
+      const c3 = document.getElementById("chk-3").checked;
+      document.getElementById("btn-unlock-door").disabled = !(c1 && c2 && c3);
+    }
+
+    function unlockCurrentDoor() {
+      const id = gameState.activeDoorId;
+      gameState.unlockedDoors[id] = true;
+
+      // Update Top HUD Stars & Door Progress Badges
+      updateHudProgress();
+
+      // Close modal and smoothly swing open the 3D Hinged Door Panels (105 deg)!
+      closeDoorModal();
+      const dObj = doors3D[id];
+      if (dObj) {
+        dObj.targetOpenAngle = (105 * Math.PI) / 180;
+        dObj.emblemMat.color.setHex(0x77DD77);
+        dObj.emblemMat.emissive.setHex(0x77DD77);
+        dObj.proxRing.visible = false;
+        triggerBurstConfetti(new THREE.Vector3(0, 1.5, dObj.z));
+      }
+
+      // Refresh proximity state so the locked prompt clears immediately
+      gameState.nearbyDoorId = null;
+      document.getElementById("door-proximity-banner").classList.add("hidden");
+      document.getElementById("btn-hud-interact").classList.add("hidden");
+
+      if (id < 4) {
+        showToast("🔓", `Door ${id} Unlocked! Walk forward to Door ${id + 1}!`);
+      } else {
+        showToast("🏆", "Door 4 Unlocked! Walk straight ahead to the Victory Sanctuary!");
+      }
+    }
+
+    function updateHudProgress() {
+      let unlockedCount = 0;
+      let starsHtml = "";
+
+      for (let i = 1; i <= 4; i++) {
+        const done = gameState.unlockedDoors[i];
+        if (done) unlockedCount++;
+        starsHtml += `<span class="${done ? 'opacity-100 scale-110' : 'opacity-35'} transition-all">⭐</span>`;
+
+        const pill = document.getElementById(`prog-door-${i}`);
+        const icon = document.getElementById(`prog-icon-${i}`);
+        if (done) {
+          pill.className = "px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-[#77DD77]/45 text-[#1E3A5F] border border-white flex items-center gap-1";
+          icon.textContent = "🔓";
+        } else {
+          pill.className = "px-2.5 py-1 rounded-xl text-xs font-display font-bold bg-white/75 text-[#1E3A5F]/75 border border-white flex items-center gap-1";
+          icon.textContent = "🔒";
+        }
+      }
+
+      document.getElementById("hud-stars").innerHTML = starsHtml;
+      document.getElementById("hud-star-count").textContent = `${unlockedCount}/4`;
+    }
+
+    function allFourDoorsUnlocked() {
+      return (
+        gameState.unlockedDoors[1] &&
+        gameState.unlockedDoors[2] &&
+        gameState.unlockedDoors[3] &&
+        gameState.unlockedDoors[4]
+      );
+    }
+
+    function openFinalCertificate() {
+      gameState.certificateShown = true;
+      triggerBurstConfetti(new THREE.Vector3(0, 2.5, SANCTUARY_Z));
+
+      const chosen = CH3_PICTURES[gameState.ch3Choice];
+      document.getElementById("cert-ch3-summary").innerHTML =
+        `<strong>Door 3:</strong> Described the ${chosen.summaryLabel}`;
+
+      document.getElementById("certificate-overlay").classList.remove("hidden");
+    }
+
+    function resetFullGame() {
+      showConfetti = false;
+      confettiParticles.forEach((p) => (p.visible = false));
+
+      gameState.unlockedDoors = { 1: false, 2: false, 3: false, 4: false };
+      gameState.certificateShown = false;
+      gameState.nearbyDoorId = null;
+
+      // Reset 3D Doors back to closed state
+      Object.values(doors3D).forEach((d) => {
+        d.targetOpenAngle = 0;
+        d.openAngle = 0;
+        d.emblemMat.color.setHex(0xF4C430);
+        d.emblemMat.emissive.setHex(0xF4C430);
+        d.proxRing.visible = true;
+      });
+
+      // Reset Player Avatar back to starting Courtyard 1
+      playerPhysics.pos.set(0, 0, 11.5);
+      playerPhysics.yaw = Math.PI;
+      camYawOffset = 0;
+      camPitchOffset = 0;
+
+      updateHudProgress();
+      document.getElementById("certificate-overlay").classList.add("hidden");
+      showToast("🌟", "Adventure reset! Walk forward to Door 1!");
+    }
+
+    /*************************************************************************
+     * 8. SAFE FULL-TAB LAUNCHER & TOAST NOTIFICATION HELPER
+     *************************************************************************/
+    function openInFullTab() {
+      const href = window.location.href || "";
+      const isHttp =
+        (href.startsWith("http://") || href.startsWith("https://")) &&
+        !href.includes("about:srcdoc");
+
+      if (isHttp) {
+        window.open(href, "_blank", "noopener,noreferrer");
+      } else {
+        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(icon, text) {
+      const box = document.getElementById("toast-box");
+      document.getElementById("toast-icon").textContent = icon;
+      document.getElementById("toast-text").textContent = text;
+
+      box.classList.remove("opacity-0", "-translate-y-2");
+      box.classList.add("opacity-100", "translate-y-0");
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        box.classList.add("opacity-0", "-translate-y-2");
+        box.classList.remove("opacity-100", "translate-y-0");
+      }, 3300);
+    }
+
+    /*************************************************************************
+     * 5. FULL BROWSER TAB LAUNCHER (FOR IFRAME MIC PERMISSIONS)
+     *************************************************************************/
+    let cleanInitialHtmlTemplate = null;
+
+    function openInFullTab() {
+      try {
+        // Clone the clean initial document (or sanitize current DOM) so no stale <canvas> or modal state is copied
+        const parser = new DOMParser();
+        const sourceHtml = cleanInitialHtmlTemplate || ("<!DOCTYPE html>\n" + document.documentElement.outerHTML);
+        const doc = parser.parseFromString(sourceHtml, "text/html");
+
+        // Ensure #canvas-container is completely empty so the new tab builds a fresh WebGL context
+        const clonedContainer = doc.getElementById("canvas-container");
+        if (clonedContainer) {
+          clonedContainer.innerHTML = "";
+        }
+
+        // Ensure welcome screen starts visible and modals/HUD reset cleanly in the new tab
+        const welcomeEl = doc.getElementById("welcome-overlay");
+        if (welcomeEl) welcomeEl.classList.remove("hidden");
+        const doorModalEl = doc.getElementById("door-modal-overlay");
+        if (doorModalEl) doorModalEl.classList.add("hidden");
+        const certEl = doc.getElementById("certificate-overlay");
+        if (certEl) certEl.classList.add("hidden");
+        const hudEl = doc.getElementById("walk-controls-ui");
+        if (hudEl) hudEl.classList.add("hidden");
+
+        const fullHtml = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+        const blobUrl = URL.createObjectURL(blob);
+        const win = window.open(blobUrl, "_blank");
+        if (!win) {
+          showToast("⚠️", "Popup blocked! Please allow popups or use 'Practice Without Mic'.");
+        } else {
+          showToast("🚀", "Opened in a full browser tab with fresh 3D & Microphone access!");
+        }
+      } catch (err) {
+        showToast("ℹ️", "Could not open new tab—click 'Practice Without Mic' anytime!");
+      }
+    }
+
+    /*************************************************************************
+     * 6. BOOTSTRAP 3D WORLD ON WINDOW LOAD
+     *************************************************************************/
+    function bootStarSpeakerApp() {
+      // Capture clean initial HTML snapshot before Three.js injects its WebGL canvas
+      if (!cleanInitialHtmlTemplate) {
+        cleanInitialHtmlTemplate = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      }
+
+      // If Three.js CDN is still finishing async load, wait briefly before booting
+      if (typeof THREE === "undefined" && !window.__threeWaitCount) {
+        window.__threeWaitCount = 1;
+        setTimeout(bootStarSpeakerApp, 250);
+        return;
+      }
+
+      initThreeWorld();
+      onWindowResize();
+      animate();
+    }
+
+    window.addEventListener("load", bootStarSpeakerApp);
+  </script>
+</body>
+</html>
